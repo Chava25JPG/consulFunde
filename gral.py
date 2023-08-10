@@ -33,14 +33,10 @@ INNER JOIN matricula m ON u.CI_USER = m.CI_USER AND m.COD_PROGRA = '{codigo_prog
 INNER JOIN programa p ON m.COD_PROGRA = p.COD_PROGRA;
 '''
 
-# Conexión a la base de datos
 conn = mysql.connector.connect(**config)
 
-# Ejecutar la consulta y crear el DataFrame con los resultados
 df = pd.read_sql_query(query, conn)
 
-# Cerrar la conexión a la base de datos
 conn.close()
 
-# Mostrar el resumen general en una tabla
 print(df)
