@@ -16,6 +16,7 @@ def run_query(ci_user):
             u.NOM_USER,
             u.APE_PAT,
             u.APE_MAT,
+            p.COD_PROGRA AS CODIGO_PROGRAMA,
             CASE
                 WHEN t.CI_USER IS NOT NULL THEN '1'
                 ELSE '0'
@@ -62,7 +63,14 @@ def run_query(ci_user):
             IFNULL(DATE_FORMAT(MAX(dd.fecha_fotocopia_ci_vigente), '%Y-%m-%d'), '0') AS FECHA_ENVIO_UNO_DEFENSA,
 
             IFNULL(DATE_FORMAT(MAX(t.FECHA_DEFENSA), '%Y-%m-%d'), '0') AS FECHA_DEFENSA_TESIS,
-            IFNULL(MAX(t.VALOR_EVALUACION), '0') AS VALOR_EVALUACION_DEFENSA
+            IFNULL(MAX(t.VALOR_EVALUACION), '0') AS VALOR_EVALUACION_DEFENSA,
+            
+            CASE
+                WHEN dt.ci_user IS NOT NULL THEN 1
+                ELSE 0
+            END AS TITULACION_ENTREGADO,
+            
+            IFNULL(DATE_FORMAT(MAX(dt.fecha_fotocopia_ci_vigente), '%Y-%m-%d'), '0') AS TITULACION_FECHA_UNO
 
         FROM usuario u
         LEFT JOIN tesis t ON u.CI_USER = t.CI_USER
@@ -70,10 +78,13 @@ def run_query(ci_user):
         LEFT JOIN docs_defensa d ON u.CI_USER = d.ci_user
         LEFT JOIN docs_refrenda dr ON u.CI_USER = dr.ci_user
         LEFT JOIN docs_defensa dd ON u.CI_USER = dd.ci_user
+        LEFT JOIN docs_titulacion dt ON u.CI_USER = dt.ci_user
+        INNER JOIN matricula m ON u.CI_USER = m.CI_USER
+        INNER JOIN programa p ON m.COD_PROGRA = p.COD_PROGRA
 
         WHERE u.CI_USER = '{ci_user}'
 
-        GROUP BY u.CI_USER, u.NOM_USER, u.APE_PAT, u.APE_MAT;
+        GROUP BY u.CI_USER, u.NOM_USER, u.APE_PAT, u.APE_MAT, p.COD_PROGRA;
         """
         
         results = pd.read_sql_query(query, connection)
