@@ -1,8 +1,7 @@
-
 import mysql.connector
 import pandas as pd
 
-def run_query(program_code):
+def run_query(ci_user):
     connection = mysql.connector.connect(
         host="localhost",
         user="root",
@@ -63,15 +62,24 @@ def run_query(program_code):
             IFNULL(DATE_FORMAT(MAX(dd.fecha_fotocopia_ci_vigente), '%Y-%m-%d'), '0') AS FECHA_ENVIO_UNO_DEFENSA,
 
             IFNULL(DATE_FORMAT(MAX(t.FECHA_DEFENSA), '%Y-%m-%d'), '0') AS FECHA_DEFENSA_TESIS,
-            IFNULL(MAX(t.VALOR_EVALUACION), '0') AS VALOR_EVALUACION_DEFENSA
+            IFNULL(MAX(t.VALOR_EVALUACION), '0') AS VALOR_EVALUACION_DEFENSA,
+
+            CASE
+                WHEN dt.ci_user IS NOT NULL THEN 1
+                ELSE 0
+            END AS TITULACION_ENTREGADO,
+
+            IFNULL(DATE_FORMAT(MAX(dt.fecha_fotocopia_ci_vigente), '%Y-%m-%d'), '0') AS TITULACION_FECHA_UNO
 
         FROM usuario u
-        LEFT JOIN tesis t ON u.CI_USER = t.CI_USER AND t.COD_PROGRAMA = '{program_code}'
+        LEFT JOIN tesis t ON u.CI_USER = t.CI_USER
         LEFT JOIN docs_refrenda r ON u.CI_USER = r.ci_user
         LEFT JOIN docs_defensa d ON u.CI_USER = d.ci_user
         LEFT JOIN docs_refrenda dr ON u.CI_USER = dr.ci_user
         LEFT JOIN docs_defensa dd ON u.CI_USER = dd.ci_user
-        INNER JOIN matricula m ON u.CI_USER = m.CI_USER AND m.COD_PROGRA = '{program_code}'
+        LEFT JOIN docs_titulacion dt ON u.CI_USER = dt.ci_user
+
+        WHERE u.CI_USER = '{ci_user}'
 
         GROUP BY u.CI_USER, u.NOM_USER, u.APE_PAT, u.APE_MAT;
         """
@@ -81,8 +89,14 @@ def run_query(program_code):
         return results
 
 if __name__ == "__main__":
-    program_code = input("Ingrese el nombre del programa: ")
-    query_results = run_query(program_code)
+    ci_user = input("Ingrese el CI_USER del usuario que desea consultar: ")
+    query_results = run_query(ci_user)
+    
+    if not query_results.empty:
+        print(query_results)
+    else:
+        print("No se encontraron resultados.")
+
     
     if not query_results.empty:
         print(query_results)
